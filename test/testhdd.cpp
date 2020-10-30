@@ -46,11 +46,10 @@ void test_block_groups(Ext2FS * fs){
 void test_load_inode(Ext2FS * fs){
 	cout << "=== Test Load Inode ===" << endl;
     Ext2FSInode *inodo = fs->load_inode(23674);
-    cout << inodo->size << endl; 
     assert(inodo->size == 1024);
     inodo = fs->load_inode(23673);
     assert(inodo->size == 26051);
-   
+	cout << "Load Inode: Passed" << endl;
 }
 
 void test_get_block_address(Ext2FS * fs){

@@ -279,34 +279,26 @@ unsigned int Ext2FS::blockaddr2sector(unsigned int block)
 struct Ext2FSInode * Ext2FS::load_inode(unsigned int inode_number)
 {
 	unsigned int blockgroup_number = blockgroup_for_inode(inode_number);
-	printf("blockgroup_number = %u \n", blockgroup_number);
 	struct Ext2FSBlockGroupDescriptor* descriptor = block_group(blockgroup_number);
 
-	
+	unsigned int block_size = 1024 << _superblock->log_block_size;
 
 	unsigned int inode_table_addr = descriptor->inode_table;
-	printf("inode_size= %u \n", _superblock->inode_size);
-						
-	unsigned int block_size = 1024 << _superblock->log_block_size;
-	
-	unsigned int inodes_per_block = _superblock->blocks_per_group/ _superblock->inodes_per_group;  
-	unsigned char inode_block[block_size];
-	read_block(inode_table_addr + (blockgroup_inode_index(inode_number) / inodes_per_block), inode_block ); 
-	printf("blockgroup_inode_index(inode_number) = %u \n", blockgroup_inode_index(inode_number));
-						
+	unsigned int inode_table_size = _superblock->inodes_per_group * _superblock->inode_size; 
+	unsigned int inode_table_block_count = inode_table_size / block_size;
+	unsigned int inodes_per_block = _superblock->inodes_per_group / inode_table_block_count;
 
-	unsigned char* buffer = new unsigned char[_superblock->inode_size];
+	// printf("inode_table_size: %u\n", inode_table_size);
+	// printf("inode_table_block_count: %u\n", inode_table_block_count);
+	// printf("inodes_per_block: %u\n", inodes_per_block);
 
-	
-	for(int i = 0; i < _superblock->inode_size ;i++){
-		buffer[i] = inode_block[((blockgroup_inode_index(inode_number) % inodes_per_block) * _superblock->inode_size) + i];
-	}
-	
-	for (int i = 0; i < 32; ++i)
-	{
-		printf("%u\n", (inode_block[((blockgroup_inode_index(inode_number) % inodes_per_block) * _superblock->inode_size +4*i)]));
-	}
-	return (struct Ext2FSInode*) buffer; 
+	unsigned char inode_block_buffer[block_size];
+
+	read_block(inode_table_addr + (blockgroup_inode_index(inode_number) / inodes_per_block), inode_block_buffer);
+
+	struct Ext2FSInode* inode = new struct Ext2FSInode;
+	inode = (struct Ext2FSInode*) inode_block_buffer + (blockgroup_inode_index(inode_number) % inodes_per_block);
+	return inode;
 }
 
 unsigned int Ext2FS::get_block_address(struct Ext2FSInode * inode, unsigned int block_number)
