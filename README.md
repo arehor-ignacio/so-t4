@@ -1,4 +1,8 @@
-# Taller Ext-2
+# so-t4
+
+Taller de FS
+
+## Instrucciones
 
 * Los ejercicios consisten en completar 3 funciones en el archivo **src/ext2fs.cpp**
 
