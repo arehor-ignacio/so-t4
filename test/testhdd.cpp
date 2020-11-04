@@ -63,11 +63,16 @@ void test_get_block_address(Ext2FS * fs){
     assert(inodo->size == 26051);
     add = fs->get_block_address(inodo,5);
     assert(add == 60982);
+
+	cout << "Get Block Address: Passed loko" << endl;
 }
 
 void test_get_file_inode_from_dir_inode(Ext2FS * fs){
+	cout << "=== Test Get File Inode From Dir Inode ===" << endl;    
     unsigned char caracteres[9];
 	fd_t fileDesc = fs->open("/grupos/g1/nota.txt", "cualquiera");
+	cout << "Terminé el open" << endl;    
+
 	fs->seek(fileDesc,13999);
 	fs->read(fileDesc,caracteres,8);
 	caracteres[8]=0;
