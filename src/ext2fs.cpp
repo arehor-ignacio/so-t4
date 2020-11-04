@@ -305,8 +305,6 @@ unsigned int Ext2FS::get_block_address(struct Ext2FSInode * inode, unsigned int 
 {
 	unsigned int block_size = 1024 << _superblock->log_block_size;
 
-
-
 	// Direct Block Case
 	if (block_number <= DIRECT_BLOCK_FINISH){
 		//Read from direct block
@@ -385,8 +383,57 @@ struct Ext2FSInode * Ext2FS::get_file_inode_from_dir_inode(struct Ext2FSInode * 
 	//std::cerr << *from << std::endl;
 	assert(INODE_ISDIR(from));
 
-	//TODO: Ejercicio 3
+	unsigned int block_size = 1024 << _superblock->log_block_size;
+	unsigned int block_count = from->blocks / (2 << _superblock->log_block_size);
 
+	struct Ext2FSDirEntry* dir_entry;
+	unsigned char inode_block_buffer[block_size];
+
+	std::cout << "file: " << filename << std::endl << *from << std::endl;
+
+	for (unsigned int i = 0; i < block_count; i++) {
+
+		std::cout << i << get_block_address(from, i) << std::endl;
+
+		read_block(get_block_address(from, i), inode_block_buffer);
+		
+
+		for (unsigned int j = 0; j < block_size/4; j++) {
+			dir_entry = (struct Ext2FSDirEntry *) inode_block_buffer + j*4;
+			std::cout << *dir_entry << std::endl;
+		}
+
+		// unsigned int j = 0;
+		// while (j < block_size) {
+		// 	dir_entry = (struct Ext2FSDirEntry *) inode_block_buffer + j;
+			
+		// 	// std::cout << j << std::endl;
+		// 	// std::cout << *dir_entry << std::endl;
+
+		// 	char * dir_entry_name = new char[dir_entry->name_length + 1];
+		// 	strncpy(dir_entry_name, dir_entry->name, dir_entry->name_length);
+		// 	dir_entry_name[dir_entry->name_length] = '\0';
+
+		// 	if (strcmp(dir_entry_name, filename) == 0) {
+		// 		delete[] dir_entry_name;
+		// 		return load_inode(dir_entry->inode);
+		// 	}
+
+		// 	delete[] dir_entry_name;
+
+		// 	j+= dir_entry->record_length;
+		// }
+	}
+
+	return nullptr;
+
+	// for (unsigned int j = 0; j < block_size; j+= dir_entry->record_length) {
+	// 	dir_entry = (Ext2FSDirEntry *) buffer + j;
+	// 	char* name_buffer = malloc(dir_entry->name_length);
+	// 	printf("%s\n", name_buffer);
+	// 	printf("%c\n", name_buffer[dir_entry->name_length-1]);
+	// }
+	// return load_inode(dir_entry->inode);
 }
 
 fd_t Ext2FS::get_free_fd()
