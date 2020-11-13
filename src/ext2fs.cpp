@@ -297,7 +297,7 @@ struct Ext2FSInode * Ext2FS::load_inode(unsigned int inode_number)
 	read_block(inode_table_addr + (blockgroup_inode_index(inode_number) / inodes_per_block), inode_block_buffer);
 
 	struct Ext2FSInode* inode = new struct Ext2FSInode;
-	inode = (struct Ext2FSInode*) inode_block_buffer + (blockgroup_inode_index(inode_number) % inodes_per_block);
+	*inode = *((struct Ext2FSInode*) inode_block_buffer + (blockgroup_inode_index(inode_number) % inodes_per_block));
 	return inode;
 }
 
@@ -374,7 +374,7 @@ void Ext2FS::read_block(unsigned int block_address, unsigned char * buffer)
 	unsigned int sectors_per_block = block_size / SECTOR_SIZE;
 	for(unsigned int i = 0; i < sectors_per_block; i++)
 		_hdd.read(blockaddr2sector(block_address)+i, buffer+i*SECTOR_SIZE);
-	}
+}
 
 struct Ext2FSInode * Ext2FS::get_file_inode_from_dir_inode(struct Ext2FSInode * from, const char * filename)
 {
@@ -386,33 +386,22 @@ struct Ext2FSInode * Ext2FS::get_file_inode_from_dir_inode(struct Ext2FSInode * 
 	unsigned int block_size = 1024 << _superblock->log_block_size;
 	unsigned int block_count = from->blocks / (2 << _superblock->log_block_size);
 
-	std::cout << "BLOCK_COUNT: " << block_count << std::endl;
-
-	struct Ext2FSDirEntry* dir_entry;
+	struct Ext2FSDirEntry *dir_entry;
 	unsigned char inode_block_buffer[block_size];
 
-	std::cout << "filename: " << filename << " | directory: " << *from << std::endl;
-
 	for (unsigned int i = 0; i < block_count; i++) {
-		read_block(get_block_address(from, i), inode_block_buffer);
+		unsigned int block_address = get_block_address(from, i);
+		read_block(block_address, inode_block_buffer);
 
 		unsigned int j = 0;
 		while (j < block_size) {
-			dir_entry = (struct Ext2FSDirEntry *) inode_block_buffer + j;
+			dir_entry = (struct Ext2FSDirEntry *) (inode_block_buffer + j);
 			
-			std::cout << "Offset: " << j << std::endl;
-			std::cout << *dir_entry << std::endl;
+			if (dir_entry->name_length == strlen(filename) &&
+				strncmp(dir_entry->name, filename, dir_entry->name_length) == 0) {
 
-			char * dir_entry_name = new char[dir_entry->name_length + 1];
-			strncpy(dir_entry_name, dir_entry->name, dir_entry->name_length);
-			dir_entry_name[dir_entry->name_length] = '\0';
-
-			if (strcmp(dir_entry_name, filename) == 0) {
-				delete[] dir_entry_name;
 				return load_inode(dir_entry->inode);
 			}
-
-			delete[] dir_entry_name;
 
 			j+= dir_entry->record_length;
 		}
